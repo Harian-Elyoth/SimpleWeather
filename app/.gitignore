@@ -1,0 +1,61 @@
+# Gradle files
+.gradle/
+build/
+**/build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS files
+*.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# IntelliJ/Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Android specific
+.cxx/
+captures/
+.externalNativeBuild/
+*.apk
+*.ap_
+*.dex
+*.class
+
+# NDK
+obj/
+*.so
+
+# Generated files
+gen/
+bin/
+*.pb
+
+# Crashlytics/Fabric
+crashlytics-build.properties
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# Google Services (if you use Firebase)
+google-services.json
+app/google-services.json
+
+# Misc
+*.orig
+*.rej
+
+# VS Code
+.vscode/
