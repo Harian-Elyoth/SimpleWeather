@@ -13,6 +13,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Set up toolbar
+        setSupportActionBar(binding.toolbar)
+
         // Add WelcomeFragment if this is the first launch
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()

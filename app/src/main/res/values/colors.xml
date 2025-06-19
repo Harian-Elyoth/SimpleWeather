@@ -10,4 +10,5 @@
     <color name="orange">#FFA500</color>
     <color name="blue">#FF0000FF</color>
     <color name="skyblue">#FF87CEEB</color>
+    <color name="snackbar_error">#FFD32F2F</color>
 </resources>

@@ -13,6 +13,10 @@ class WelcomeViewModel : ViewModel() {
         _welcomeState.value = WelcomeState.ShowingSun
     }
 
+    fun completeSunAnimation() {
+        _welcomeState.value = WelcomeState.ShowingText
+    }
+
     fun completeWelcomeSequence() {
         _welcomeState.value = WelcomeState.Complete
     }
