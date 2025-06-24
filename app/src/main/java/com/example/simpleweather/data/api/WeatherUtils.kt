@@ -6,8 +6,8 @@ import android.content.SharedPreferences
 object WeatherUtils {
     
     // TODO: Replace with your actual API key from https://openweathermap.org/api
-    const val API_KEY = "4757662e4476edf0c9cb720942b7a195"
-    
+    const val API_KEY = ""
+
     /**
      * Get API key from SharedPreferences or use default
      */

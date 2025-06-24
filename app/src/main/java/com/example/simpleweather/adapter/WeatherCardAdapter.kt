@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.simpleweather.data.model.WeatherCard
 import com.example.simpleweather.databinding.FragmentMeteoCardBinding
+import com.bumptech.glide.Glide
 
 class WeatherCardAdapter : ListAdapter<WeatherCard, WeatherCardAdapter.WeatherCardViewHolder>(WeatherCardDiffCallback()) {
 
@@ -41,8 +42,12 @@ class WeatherCardAdapter : ListAdapter<WeatherCard, WeatherCardAdapter.WeatherCa
                 // Set weather description
                 weatherDescription.text = weatherCard.weatherDescription
                 
-                // Set weather icon (using a placeholder for now)
-                weatherIcon.setImageResource(android.R.drawable.ic_menu_gallery)
+                // Load weather icon from OpenWeather
+                val iconUrl = "https://openweathermap.org/img/wn/${weatherCard.weatherIcon}@2x.png"
+                println("Adapter: Loading icon for ${weatherCard.city}: $iconUrl")
+                Glide.with(weatherIcon.context)
+                    .load(iconUrl)
+                    .into(weatherIcon)
                 
                 // Set weather details
                 humidityText.text = "Humidity: ${weatherCard.humidity}%"

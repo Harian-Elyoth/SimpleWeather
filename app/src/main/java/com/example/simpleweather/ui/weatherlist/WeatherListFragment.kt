@@ -26,6 +26,7 @@ import com.example.simpleweather.adapter.WeatherCardAdapter
 import com.example.simpleweather.databinding.FragmentWeatherListBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class WeatherListFragment : Fragment() {
     private var _binding: FragmentWeatherListBinding? = null
@@ -50,6 +51,12 @@ class WeatherListFragment : Fragment() {
         setupPullToRefresh()
         setupMenu()
         observeViewModel()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh weather data when fragment becomes visible
+        viewModel.refreshWeatherData()
     }
 
     private fun setupMenu() {
@@ -121,10 +128,11 @@ class WeatherListFragment : Fragment() {
     }
     
     private fun showAddCityDialog() {
+        val context = context ?: return
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_add_city, null)
         val cityNameEditText = dialogView.findViewById<EditText>(R.id.cityNameEditText)
         
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(context)
             .setView(dialogView)
             .setCancelable(true)
             .create()
@@ -136,8 +144,34 @@ class WeatherListFragment : Fragment() {
         dialogView.findViewById<View>(R.id.addButton).setOnClickListener {
             val cityName = cityNameEditText.text.toString().trim()
             if (cityName.isNotEmpty()) {
-                viewModel.addCity(cityName)
-                dialog.dismiss()
+                // Validate city name (only letters, spaces, and common punctuation)
+                if (!cityName.matches(Regex("^[a-zA-Z\\s\\-',.]+$"))) {
+                    cityNameEditText.error = "Please enter a valid city name"
+                    return@setOnClickListener
+                }
+                
+                // Check if API key is set
+                val prefs = requireContext().getSharedPreferences("weather_prefs", Context.MODE_PRIVATE)
+                val apiKey = prefs.getString("api_key", "")
+                if (apiKey.isNullOrEmpty()) {
+                    Snackbar.make(binding.root, "Please set your API key in settings first", Snackbar.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+                
+                // Check if city already exists
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val isCityExists = viewModel.isCityFavorite(cityName)
+                        if (isCityExists) {
+                            Snackbar.make(binding.root, "City '$cityName' is already in your favorites", Snackbar.LENGTH_LONG).show()
+                        } else {
+                            viewModel.addCity(cityName)
+                            dialog.dismiss()
+                        }
+                    } catch (e: Exception) {
+                        Snackbar.make(binding.root, "Error checking city: ${e.message}", Snackbar.LENGTH_LONG).show()
+                    }
+                }
             } else {
                 cityNameEditText.error = "Please enter a city name"
             }

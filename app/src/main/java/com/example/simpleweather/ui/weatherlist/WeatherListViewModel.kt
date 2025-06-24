@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import retrofit2.HttpException
+import kotlinx.coroutines.flow.first
 
 class WeatherListViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -37,11 +38,41 @@ class WeatherListViewModel(application: Application) : AndroidViewModel(applicat
             _error.value = null
             
             try {
+                // First add the city to favorites
                 repository.addCity(cityName)
-                // Load weather for the new city
+                
+                // Create a placeholder weather card to show the city immediately
+                val placeholderWeatherCard = WeatherCard(
+                    city = cityName,
+                    dateTime = "Loading...",
+                    temperature = 0.0,
+                    weatherIcon = "",
+                    weatherDescription = "Loading weather data...",
+                    humidity = 0,
+                    windSpeed = 0.0,
+                    pressure = 0
+                )
+                addWeatherCard(placeholderWeatherCard)
+                
+                // Then try to load actual weather for the new city
                 loadWeatherForCity(cityName)
             } catch (e: Exception) {
-                _error.value = "Failed to add city: ${e.message}"
+                when (e) {
+                    is retrofit2.HttpException -> {
+                        when (e.code()) {
+                            404 -> _error.value = "City '$cityName' was not found. Please check the spelling."
+                            401 -> _error.value = "Invalid API key. Please check your settings."
+                            429 -> _error.value = "Too many requests. Please try again later."
+                            else -> _error.value = "Failed to add city: ${e.message}"
+                        }
+                    }
+                    is java.net.UnknownHostException -> {
+                        _error.value = "No internet connection. Please check your network."
+                    }
+                    else -> {
+                        _error.value = "Failed to add city: ${e.message}"
+                    }
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -120,8 +151,31 @@ class WeatherListViewModel(application: Application) : AndroidViewModel(applicat
     
     private fun loadFavoriteCitiesWeather() {
         viewModelScope.launch {
-            repository.getWeatherDataForFavoriteCities().collect { weatherCards ->
-                _weatherCards.value = weatherCards
+            try {
+                // Debug: Check favorite cities
+                debugFavoriteCities()
+                
+                // Get all favorite cities
+                val favoriteCities = repository.getAllFavoriteCities().first()
+                
+                // Load weather data for each favorite city
+                for (city in favoriteCities) {
+                    try {
+                        repository.getCurrentWeather(city.cityName)
+                            .onSuccess { weatherCard ->
+                                addWeatherCard(weatherCard)
+                            }
+                            .onFailure { exception ->
+                                // Log error but continue with other cities
+                                _error.value = "Failed to load weather for ${city.cityName}: ${exception.message}"
+                            }
+                    } catch (e: Exception) {
+                        // Log error but continue with other cities
+                        _error.value = "Failed to load weather for ${city.cityName}: ${e.message}"
+                    }
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to load favorite cities: ${e.message}"
             }
         }
     }
@@ -163,6 +217,19 @@ class WeatherListViewModel(application: Application) : AndroidViewModel(applicat
     
     fun clearError() {
         _error.value = null
+    }
+
+    suspend fun isCityFavorite(cityName: String): Boolean {
+        return repository.isCityFavorite(cityName)
+    }
+    
+    // Debug method to check favorite cities
+    suspend fun debugFavoriteCities() {
+        val cities = repository.getAllFavoriteCities().first()
+        println("DEBUG: Found ${cities.size} favorite cities:")
+        for (city in cities) {
+            println("DEBUG: - ${city.cityName}")
+        }
     }
 
     // Helper function to format date

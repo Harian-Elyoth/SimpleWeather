@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.simpleweather.databinding.FragmentWeatherCardBinding
 import kotlinx.coroutines.launch
 import com.example.simpleweather.data.model.WeatherCard
+import com.bumptech.glide.Glide
 
 class WeatherCardFragment : Fragment() {
     private var _binding: FragmentWeatherCardBinding? = null
@@ -22,24 +23,34 @@ class WeatherCardFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        println("WeatherCardFragment: onCreateView called")
         _binding = FragmentWeatherCardBinding.inflate(inflater, container, false)
+        println("WeatherCardFragment: Binding inflated successfully")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        println("WeatherCardFragment: onViewCreated called")
         observeViewModel()
     }
 
     private fun observeViewModel() {
+        println("WeatherCardFragment: observeViewModel called")
         viewLifecycleOwner.lifecycleScope.launch {
+            println("WeatherCardFragment: Starting to observe weatherCard flow")
             viewModel.weatherCard.collect { weatherCard ->
-                weatherCard?.let { updateUI(it) }
+                println("WeatherCardFragment: Received weatherCard: $weatherCard")
+                weatherCard?.let { 
+                    println("WeatherCardFragment: WeatherCard is not null, calling updateUI")
+                    updateUI(it) 
+                } ?: println("WeatherCardFragment: WeatherCard is null")
             }
         }
     }
 
     private fun updateUI(weatherCard: WeatherCard) {
+        println("updateUI called for city: ${weatherCard.city}, icon: ${weatherCard.weatherIcon}")
         binding.apply {
             // Set city name
             cityName.text = weatherCard.city
@@ -53,18 +64,24 @@ class WeatherCardFragment : Fragment() {
             // Set weather description
             weatherDescription.text = weatherCard.weatherDescription
             
-            // Set weather icon (using a placeholder for now)
-            weatherIcon.setImageResource(android.R.drawable.ic_menu_gallery)
+            // Log and set weather icon
+            val iconUrl = "https://openweathermap.org/img/wn/${weatherCard.weatherIcon}@2x.png"
+            println("Loading icon: $iconUrl")
+            Glide.with(weatherIcon.context)
+                .load(iconUrl)
+                .into(weatherIcon)
             
             // Set weather details
             humidityText.text = "Humidity: ${weatherCard.humidity}%"
             windSpeedText.text = "Wind: ${weatherCard.windSpeed} km/h"
             pressureText.text = "Pressure: ${weatherCard.pressure} hPa"
         }
+        println("WeatherCardFragment: updateUI completed")
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        println("WeatherCardFragment: onDestroyView called")
         _binding = null
     }
 }
